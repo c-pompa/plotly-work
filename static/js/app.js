@@ -1,250 +1,146 @@
-function descInt(array_to_filter, b, a) {
-    desc_int = array_to_filter.sort((a, b) => b - a);
-    return parseInt(desc_int);
+// Function: Make Bar Plot
+function makePlot(sample_values, otu_and_id, labels) {
+
+    var trace = {
+        x: sample_values,
+        y: otu_and_id,
+        text: labels,
+        marker: {
+        color: 'blue'},
+        type:"bar",
+        orientation: "h",
+    };
+
+    // Data for Trace
+    var data = [trace];
+
+    // Layout
+    var layout = {
+        title: "Top 10 OTU",
+        yaxis:{
+            tickmode:"linear",
+            },
+        margin: {
+            l: 100,
+            r: 100,
+            t: 100,
+            b: 30
+            }
+        };
+
+    // create the bar plot
+    Plotly.newPlot("bar", data, layout);
+};
+
+// Function: Make Bubble plot
+function makeBubblePlot(sample_values_all, otu_ids_all, labels_all, id_selected) {
+    var trace1 = {
+        x: otu_ids_all,
+        y: sample_values_all,
+        text: labels_all,
+        mode: 'markers',
+        marker: {
+          color: otu_ids_all,
+          size: sample_values_all
+        }
+      };
+      
+      var data = [trace1];
+      
+      var layout = {
+        title: ` Bubble Chart <br>Test Subject ID No. ${id_selected}`,
+        xaxis: { label: "test",
+            },
+        showlegend: false
+      };
+      
+      Plotly.newPlot('bubble', data, layout);
 };
 
 
-// Function: Create Bar Plot
-function createBarPlot(x_data, y_data, text_data) {
-    var trace1 = {
-        x: x_data,
-        y: y_data,
-        text: text_data,
-        name: "barr",
-        type: "bar",
-        orientation: "h"
-    };
+// Function: Get data ready for plotting and call plots needed. 
+// Also pass refreshed ID number
+function getPlots(id_selected) {
+    d3.json("./data/samples.json").then(d => {
 
-    var data = [trace1];
-
-    var layout = {
-        title: "Test Bar Plot"
-    };
-    plot = Plotly.newPlot("bar", data, layout);
-    return plot;
-}
-
-// Create an array of each country's numbers
-// Create Empty List
-var values_list = [];
-var labels_list = [];
-var ids = [];
-var otu_ids_list = [];
-
-
-
-// Promise Pending
-url = "./data/samples.json"
-const dataPromise = d3.json(url);
-console.log("Data Promise: ", dataPromise);
-
-////////////////////
-// D3: Call JSON, assign name, export values.
-//////////////////
-d3.json("./data/samples.json").then(function(data) {
-
-    // Sort the data by Greek search results
-    data.samples.sort((a, b) => parseInt(b.sample_values) - parseInt(a.sample_values));
-    
-    // Verify Sample Array from data.samples
-    var samples_array = Object.values(data.samples);
-    console.log("Data Promise: ", samples_array);
-
-
-    /////////////////////////////////////////////////
-    // Create Array: User ID's in samples.id
-    // After getting single ID, add to options dropdown 
-    /////////////////////////////////////////////////
-    var id = samples_array.map(row => row.id);
-        for (var i = 0; i < samples_array.length; i++) {
-                add_id_to_option = id[i];
-                // console.log(id[i]);
-                buildSelectOptions(add_id_to_option);
-            // console.log(id[0]);
-
-
-        // Function: Add id's to the select - option
-        function buildSelectOptions(ids) {
-            var select_dropdown = document.getElementById("selDataset");
-            var option = document.createElement("option");
-            option.innerHTML = ids;
-            select_dropdown.options.add(option);
-        };
-    };
+        let result = d.samples.filter(obj => {
+            // console.log('Sample ID Test', obj.id === id_selected);
+            return obj.id === id_selected;
+          });
+        // console.log(result[0]);
         
-    /////////////////////////////////////////////////
-    // Create Array: Sample Values in samples.sample_values
-    /////////////////////////////////////////////////
-    // Map sample_values using samples_array created above
-    var values = samples_array.map(row => row.sample_values);
-    // Loop through each users sample_values list and slice down to 10.
-    for (var i = 0; i < values.length; i++) {
-        // Slice sample values down to 10
-        values_sliced = values[i].slice(0, 10);
-        // Reverse the array to accommodate Plotly's defaults
-        values_reversedData = values_sliced.reverse();
-        // Add values of 'id' to list
-        values_list.push(values_reversedData);
-    };
-    /////////////////////////////////////////////////
-    // Create Array: Labels in samples.otu_labels
-    /////////////////////////////////////////////////
-    // Map otu_labels using samples_array created above
-    var labels = samples_array.map(row => row.otu_labels);
-    // Loop through each users otu_labels list and slice down to 10.
-    for (var i = 0; i < labels.length; i++) {
-        // Slice sample values down to 10
-        labels_sliced = labels[i].slice(0, 10);
-        // Reverse the array to accommodate Plotly's defaults
-        reversedData = labels_sliced.reverse();
-        // Add values of 'id' to list
-        labels_list.push(reversedData);
-    };
-    /////////////////////////////////////////////////
-    // Create Array: otu_ids in samples.otu_ids
-    /////////////////////////////////////////////////
-    // Map otu_ids using samples_array created above
-    var otu_ids = samples_array.map(row => row.otu_ids);
-    // Loop through each users otu_ids list and slice down to 10.
-    for (var i = 0; i < otu_ids.length; i++) {
-        // Slice sample values down to 10
-        otu_ids_sliced = otu_ids[i].slice(0, 10);
-        // Reverse the array to accommodate Plotly's defaults
-        otu_ids_reversedData = otu_ids_sliced.reverse();
-        // Add values of 'id' to list
-        otu_ids_list.push(otu_ids_reversedData);
-    };
-});
+        // sample_values sliced - top 10
+        var sample_values = result[0].sample_values.slice(0,10).reverse();
+        // sample_vales all
+        var sample_values_all = result[0].sample_values.reverse();
+        // console.log('Must match result[0]:', sample_values);
 
+        // Labels sliced
+        var labels = result[0].otu_labels.slice(0,10);
+        // Labels all
+        var labels_all = result[0].otu_labels;
+        // console.log(labels);
 
-// Test logs
-console.log("User IDS: ", ids);
-console.log("Sample Values: ", values_list);
-console.log("OTU Labels: ", labels_list);
-console.log("OTU ID's: ", otu_ids_list);
+        // Top 10 otu ids sliced
+        var top_10_otu = (result[0].otu_ids.slice(0,10)).reverse();
+        var otu_ids_all = result[0].otu_ids.reverse();
+        // console.log(top_10_otu);
+        // Labels for bar plot
+        var otu_and_id = top_10_otu.map(d => "OTU " + d);
+        // console.log(otu_and_id);
+        makeBubblePlot(sample_values_all, otu_ids_all, labels_all, id_selected);
+        makePlot(sample_values, otu_and_id, labels);
+    });
+};
 
-///////////////////
-// Plot: KEEP
-///////////////////
-// createBarPlot();
-
-///////////////////////////////////////////////////////////////////////
-// On change to the DOM, call getData()
-// d3.selectAll("#selDataset").on("change", getData);
-
-// // Function called by DOM changes
-// function getData() {
-//   var dropdownMenu = d3.select("#selDataset");
-//   // Assign the value of the dropdown menu option to a variable
-//   var dataset = dropdownMenu.property("value");
-//   // Initialize an empty array for the country's data
-//   var data = [];
-
-//   if (dataset == 'us') {
-//       data = us;
-//   }
-//   else if (dataset == 'uk') {
-//       data = uk;
-//   }
-//   else if (dataset == 'canada') {
-//       data = canada;
-//   }
-//   // Call function to update the chart
-//   updatePlotly(data);
-// }
-
-// // Update the restyled plot's values
-// function updatePlotly(newdata) {
-//   Plotly.restyle("pie", "values", [newdata]);
-// }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//////////////////////////////////////////////////////////
-// Left Off Notes 
-//////////////////////////////////////////////////////////
-//  Above creates new array lists for each group data sets we are looking for.
-//  We will need to tweak this in order for it to be plotted. 
-//  It looks like we can add the variable before the push .push(THIS VAR).
-//////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////
-// End 
-
-
-///////////////////////////////////////////////////////////
-// Rough Extra References
-///////////////////////////////////////////////////////////
-    // for (var i = 0; i < samples_array.length; i++) {
-    // // Retreive id from samples.id
-    //     var sample_values = data.samples.sample_values.map(row => row);
-    //     values_list.push(sample_values);
-    //     console.log("Sample_Values: ", sample_values);
-
-
-            // Retreive sample_values from samples.sample_values list
-            // var values = data.samples.map(row => row.sample_values[i]);
+// Function: Demographic Information - id#sample-metadata
+function getDemographicInfo(id_selected) {
+        // read the json file to get data
+        d3.json("./data/samples.json").then((d)=> {
+        // get the metadata info for the demographic panel
+            var metadata = d.metadata;
+            // console.log(metadata);
     
+            // filter meta data info by id_selected
+            var result = metadata.filter(meta => meta.id.toString() === id_selected)[0];
+            // select demographic panel to put data
+            var demographicInfo = d3.select("#sample-metadata");
+            
+            // empty the demographic info panel each time before getting new id info
+            demographicInfo.html("");
     
-            // console.log(id);
+            // grab the necessary demographic data data for the id and append the info to the panel
+            Object.entries(result).forEach((key) => {   
+                demographicInfo.append("h5").text(key[0].toUpperCase() + ": " + key[1] + "\n");    
+            });
+        });
+    };
 
-    // // Slice the first 10 objects for plotting
-    // slicedData = sortedByValues.slice(0, 10);
+// Event listener action
+function optionChanged(id_selected) {
+    getDemographicInfo(id_selected);  
+    getPlots(id_selected);
+    console.log('Option Changed Event. Bar Plot updated.')
+};
 
-    // // Reverse the array to accommodate Plotly's defaults
-    // reversedData = slicedData.reverse();
+// Function init
+function init() {
+    // select dropdown menu 
+    var option_dropdown = d3.select("#selDataset");
 
-    // console.log(reversedData);
-    // console.log("reversedData Completed");
-    // // Fill each of the above arrays with randomly generated data
-    // for (var i = 0; i < reversedData.length; i++) {
-    //     // Retreive id from samples.id
-    //     var id = data.samples.map(row => row);
+    // Open JSON
+    d3.json("./data/samples.json").then((data)=> {
+        console.log('Raw Data:', data);
 
-        
-    //     // Retreive sample_values from samples.sample_values list
-    //     // var values = data.samples.map(row => row.sample_values[i]);
+        // ID name for select-options dropdown
+        data.names.forEach(function(name) {
+            option_dropdown.append("option").text(name).property("value");
+        });
 
+       // call the functions to display the data and the plots to the page
+        getPlots(data.names[0]);
+        getDemographicInfo(data.names[0]);
+    });
+};
 
-    //     console.log(id);
-
-
-
-        // console.log(i);
-
-        // values_list.push(id);
-        // labels_list.push();
-        // console.log(values_list);
-    // }
-    // console.log(values_list)
-
-
-    // // Slice the first 10 objects for plotting
-    // values_sliced = values.slice(0, 10);
-    // console.log(values_sliced);
-
-    // // Retreive otu_ids from samples.otu_ids list
-    // var labels = data.samples.map(row => row.otu_ids);
-    // console.log(labels[0]);
-
-    // // Retreive otu_labels from samples.otu_labels list
-    // var hovertext = data.samples.map(row => row.otu_labels);
-    // console.log(hovertext[0]);
-
-    // createBarPlot(values_sliced, labels, hovertext);
+init();
